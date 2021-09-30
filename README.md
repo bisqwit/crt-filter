@@ -98,6 +98,17 @@ is adjusted by a constant factor that is calculated by
 
 ![formula](https://render.githubusercontent.com/render/math?math=e^{-\frac{%28n-0.5%29^2}{2+c^2}}\text{ where }c=0.3\text{ and }n\text{ is+the+fractional+part+of+the+source+Y+coordinate.})
 
+This formula gives a gaussian distribution that looks like a hill,
+that peaks in the middle and fades smoothly to the sides. 
+This hill represents the brightness curve of each scanline.
+Plotted in a graphing calculator, it looks like this.
+The c constant controls how steep that hill is. A small value like 0.1
+produces a very narrow hill with very sharp and narrow scanlines,
+and bigger values produce flatter hills i.e. less pronounced scanlines.
+0.3 looked like a good compromise.
+
+![Gaussian](img/weights.png)
+
 ### Filtering
 
 Each color channel and each pixel of the picture — now intermediate width and height — is multiplied by a mask
@@ -127,17 +138,35 @@ This copy is gamma-corrected and amplified with a significant factor, to promote
 
 ![gamma](https://render.githubusercontent.com/render/math?math=value_{copy}=\frac{600}{255}value^\gamma\text{ for every color channel }value\text{ in the picture})
 
-This copy is gaussian-blurred using a three-step box filter,
+This copy is 2D-gaussian-blurred using a three-step box filter,
 where the blur width is set as output-width / 640.
+The blur algorithm is very fast and works in linear time,
+adapted from http://blog.ivank.net/fastest-gaussian-blur.html .
 
 Then, the actual picture is gamma-corrected, this time without a brightening factor.
 
 ![gamma](https://render.githubusercontent.com/render/math?math=value\leftarrow+value^\gamma\text{ for every color channel }value\text{ in the picture})
 
-Then, the picture and its blurry copy are added together,
-and each pixel is clamped to the target range using a desaturation formula.
+Then, blurry copy is added into with the picture,
+by literally adding its pixel values into the target pixel values
+and writing the result to the target.
 
-### The desaturation formula
+![gamma](https://render.githubusercontent.com/render/math?math=value\leftarrow+value%2Bvalue_{copy}\text{ for every color channel }value\text{ in the picture})
+
+Because of the combination of amplification and blurring,
+if there are isolated bright pixels in the scene,
+their power is spread out on big area
+and thus do not contribute much to the final picture,
+but if there is a large group of bright pixels closeby,
+they remain bright even after blurring,
+and will influence the final picture a lot.
+
+### Clamping
+
+Finally, before quantizing the floating-point colors and sending the frame to output,
+each pixel is clamped to the target range using a desaturation formula.
+
+#### The desaturation formula
 
 The desaturation formula first calculates a luminosity value from the input R,G,B
 components using ITU coefficients (see [sRGB on Wikipedia](https://en.wikipedia.org/wiki/SRGB)):
