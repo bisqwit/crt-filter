@@ -14,10 +14,8 @@ Run this command to build the filter:
 
 ## Usage
 
-You can find some example usage in make-reencoded.sh.
-
-The filter takes BGRA (RGB32) video from stdin,
-and produces BGRA video into stdout.
+The filter takes BGRA (RGB32) video (RAW!) from stdin,
+and produces BGRA video (RAW!) into stdout.
 
 The filter takes five commandline parameters:
 
@@ -37,6 +35,11 @@ such that the intermediate height (see Hardcoded constants)
 is its integer multiple.
 The intermediate width should ideally also be an integer
 multiple of the source width. None of this is required though.
+
+IMPORTANT: This filter does *not* decode or produce video formats like avi/mp4/mkv/whatever.
+It only deals with raw video frames. You need to use an external program,
+like ffmpeg, to perform the conversions.
+See `make-reencoded.sh` and `reencode.sh` for a practical example.
 
 ## Screenshots
 
@@ -136,7 +139,7 @@ and each pixel is clamped to the target range using a desaturation formula.
 
 ### The desaturation formula
 
-The desaturation formula calculates a luminosity value from the input R,G,B
+The desaturation formula first calculates a luminosity value from the input R,G,B
 components using ITU coefficients (see [sRGB on Wikipedia](https://en.wikipedia.org/wiki/SRGB)):
 
 ![luma calculation](https://render.githubusercontent.com/render/math?math=luma=0.2126\cdot+value_{red}%2B0.7152\cdot+value_{green}%2B0.0722\cdot+value_{blue})
