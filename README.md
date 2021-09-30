@@ -32,14 +32,20 @@ Scanlines is the number of scanlines you wish to simulate.
 Generally that would be the same as the vertical resolution of the source video,
 but that is not a requirement.
 
+## Hardcoded parameters
+
 * The number of horizontal pixels simulated is hard-coded at 640.
 * The number of vertical pixels simulated is hard-coded at 400.
-* The simulated cell geometry is hardcoded as:
-  * Red cell is 2 pixels of red and 1 pixel of black
-  * Green cell is 2 pixels of green and 1 pixel of black
-  * Blue cell is 2 pixels of blue and 2 pixels of black
-  * Each cell is 5 pixels tall followed by 1 pixel of black
-  * Successive columns are staggered 3 pixels apart vertically
+
+### Cell parameters 
+
+The simulated cell geometry is hardcoded as:
+
+* Red cell is 2 pixels of red and 1 pixel of black
+* Green cell is 2 pixels of green and 1 pixel of black
+* Blue cell is 2 pixels of blue and 2 pixels of black
+* Each cell is 5 pixels tall followed by 1 pixel of black
+* Successive columns are staggered 3 pixels apart vertically
 
 ## Screenshots
 
@@ -113,6 +119,8 @@ The mask is a repeating pattern that essentially looks like this:
 ![Mask](img/mask.png)
 
 Where red pixels are 1 for red channel, green pixels are 1 for green channel, and blue pixels are 1 for blue channel, and everything else for everyone is 0.
+
+The mask is generated procedurally from the cell parameters.
 
 ### Rescaling, part 4
 
