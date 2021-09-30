@@ -41,7 +41,7 @@ but that is not a requirement.
   * Green cell is 2 pixels of green and 1 pixel of black
   * Blue cell is 2 pixels of blue and 2 pixels of black
   * Each cell is 5 pixels tall followed by 1 pixel of black
-  * Successive columns are 3 pixels apart vertically
+  * Successive columns are staggered 3 pixels apart vertically
 
 ## Screenshots
 
@@ -67,10 +67,14 @@ Otherwise, the new frame is processed, and saved into a cache with the hash of t
 
 First, the image is un-gammacorrected by exponentiating every color component with γ⁻¹.
 
+Crt-filter uses $\gamma = 2$.
+
 ### Rescaling, part 1
 
 Then, the image is rescaled to the height of number of given scanlines
 using a Lanczos filter.
+
+The Lanczos filter has filter width set as 2.
 
 ### Rescaling, part 2
 
@@ -99,24 +103,40 @@ cell of that color according to the hardcoded cell geometry.
 
 ### Rescaling, part 4
 
-Then the image is rescaled to the target picture width using a Lanczos filter.
-
-### Rescaling, part 5
-
-Then the image is rescaled to the target picture height using a Lanczos filter.
+Then the image is rescaled to the target picture width 
+and target picture height using a Lanczos filter.
 
 ### Bloom
 
 First, the brightness of each pixel is normalized so that the sum of masks
 and scanline magnitudes does not change the overall brightness of the picture.
 
-Then, the picture is gamma-corrected.
+Then, the picture is gamma-corrected by exponentiating each color component with γ.
 
 Then, a copy is created of the picture.
-This copy is gaussian-blurred using a three-step box filter, where the blur width is set as
-output-width / 640.
+This copy is gaussian-blurred using a three-step box filter,
+where the blur width is set as output-width / 640.
 
 Then, the picture is gamma-corrected (again? I am not sure why).
 
 Then, the picture and its copy are added together, and each pixel is clamped
 to the target range using a desaturation formula for overflows.
+
+### The desaturation formula
+
+The desaturation formula calculates a luminosity value from the input R,G,B
+components using ITU coefficients 0.2126, 0.7152 and 0.0722.
+* If the luminosity is in 0…1 range, nothing needs to be done and the input color is returned.    
+* If the luminosity is less than 0, black is returned.
+* If the luminosity is more than 1, white is returned.
+
+Otherwise, each color channel is inspected separately.
+* First, a saturation value is assigned as 1.
+* If a color channel exceeds 1, saturation is adjusted as $min(saturation, (luma-1) / (luma-channelvalue))$.
+* If a color channel preceeds 0, saturation is adjusted as $min(saturation, luma / (luma-channelvalue))$.
+
+If the saturation is still 1, the input color is returned verbatim.
+Otherwise each color channel is adjusted as $channelvalue = (channelvalue - luma)\times saturation + luma$.
+The resulting value is then clamped to 0…1 range.
+
+The color channel values are then joined together to form the returned color.
