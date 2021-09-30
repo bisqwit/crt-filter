@@ -108,6 +108,12 @@ Each color channel and each pixel of the picture — now intermediate width and 
 that is either one or zero, depending on whether that pixel belongs inside a
 cell of that color according to the hardcoded cell geometry.
 
+The mask is a repeating pattern that essentially looks like this:
+
+![Mask](img/mask.png)
+
+Where red pixels are 1 for red channel, green pixels are 1 for green channel, and blue pixels are 1 for blue channel, and everything else for everyone is 0.
+
 ### Rescaling, part 4
 
 Then the image is rescaled to the target picture width 
