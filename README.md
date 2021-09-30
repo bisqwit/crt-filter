@@ -1,5 +1,3 @@
-<script type="text/javascript" charset="utf-8" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML, https://vincenttam.github.io/javascripts/MathJaxLocal.js"></script>
-
 # Bisqwit’s CRT filter
 
 This is the CRT filter that I used in my ”What is That Editor” video,
@@ -65,9 +63,13 @@ Otherwise, the new frame is processed, and saved into a cache with the hash of t
 
 ### Converting into linear colors
 
-First, the image is un-gammacorrected by exponentiating every color component with γ⁻¹.
+First, the image is un-gammacorrected by exponentiating every color component with
 
-Crt-filter uses $\gamma = 2$.
+![1/gamma](https://render.githubusercontent.com/render/math?math=\gamma^{-1})
+
+Crt-filter uses
+
+![gamma=2](https://render.githubusercontent.com/render/math?math=\gamma=2)
 
 ### Rescaling, part 1
 
@@ -80,20 +82,25 @@ The Lanczos filter has filter width set as 2.
 
 Next, the image is rescaled to the intermediate height using a nearest-neighbor filter.
 The brightness of each row of pixels is adjusted by a constant factor
-that is calculated by $\e^{-\frac{(n-0.5)^2}{2 c^2}}$ where $c = 0.3$
-and $n$ is the decimal part of the source Y coordinate.
+that is calculated by
+
+![formula](https://render.githubusercontent.com/render/math?math=e^{-\frac{%28n-0.5%29^2}{2+c^2}})
+
+where c=0.3, and n is the decimal part of the source Y coordinate.
 
 The intermediate height is the number of vertical pixels on screen
-multiplied by the cell height. This number is hardcoded
-as $400 \times (5+1) = 2400$.
+multiplied by the cell height. This number is hardcoded as:
+
+![height](https://render.githubusercontent.com/render/math?math=400\times%285%2B1%29=2400)
 
 ### Rescaling, part 3
 
 Then, the image is rescaled to an intermediate width using a nearest-neighbor filter.
 
 The intermediate width is the number of pixel cells on the screen
-multiplied by the sum of cell widths. This number is hardcoded
-as $640 \times (2+1 + 2+1 + 2+2) = 6400$.
+multiplied by the sum of cell widths. This number is hardcoded as:
+
+![width](https://render.githubusercontent.com/render/math?math=640\times%282%2B1+%2B+2%2B1+%2B+2%2B2%29=6400)
 
 ### Filtering
 
@@ -126,17 +133,15 @@ to the target range using a desaturation formula for overflows.
 
 The desaturation formula calculates a luminosity value from the input R,G,B
 components using ITU coefficients 0.2126, 0.7152 and 0.0722.
-* If the luminosity is in 0…1 range, nothing needs to be done and the input color is returned.    
 * If the luminosity is less than 0, black is returned.
 * If the luminosity is more than 1, white is returned.
+* Otherwise, a saturation value is initialized as 1, and then adjusted by inspecting each color channel value separately:
 
-Otherwise, each color channel is inspected separately.
-* First, a saturation value is assigned as 1.
-* If a color channel exceeds 1, saturation is adjusted as $min(saturation, (luma-1) / (luma-channelvalue))$.
-* If a color channel preceeds 0, saturation is adjusted as $min(saturation, luma / (luma-channelvalue))$.
+![adjust](https://render.githubusercontent.com/render/math?math=saturation\leftarrow\begin{cases}\min%28saturation,\frac{luma-1}{luma-value_{channel}}%29,+%26+\text{if+}value_{channel}\gt+1%5C%5C%0D%0A\min%28saturation,\frac{luma}{luma-value_{channel}}%29,+%26+\text{if+}value_{channel}\lt+0%5C%5Csaturation%26\text{otherwise}\end{cases})
 
 If the saturation is still 1, the input color is returned verbatim.
-Otherwise each color channel is adjusted as $channelvalue = (channelvalue - luma)\times saturation + luma$.
-The resulting value is then clamped to 0…1 range.
+Otherwise each color channel is readjusted as:
+
+![adjust](https://render.githubusercontent.com/render/math?math=value_{channel}\leftarrow\min%281,\max%280,%28value_{channel}-luma%29saturation%2Bluma%29%29)
 
 The color channel values are then joined together to form the returned color.
