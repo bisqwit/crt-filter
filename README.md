@@ -143,22 +143,26 @@ where the blur width is set as output-width / 640.
 
 Then, the picture is gamma-corrected (again? I am not sure why).
 
-Then, the picture and its copy are added together, and each pixel is clamped
-to the target range using a desaturation formula for overflows.
+Then, the picture and its blurry copy are added together,
+and each pixel is clamped to the target range using a desaturation formula.
 
 ### The desaturation formula
 
 The desaturation formula calculates a luminosity value from the input R,G,B
-components using ITU coefficients 0.2126, 0.7152 and 0.0722.
+components using ITU coefficients (see [sRGB on Wikipedia](https://en.wikipedia.org/wiki/SRGB)):
+
+![luma calculation](https://render.githubusercontent.com/render/math?math=luma=0.2126\cdot+value_{red}%2B0.7152\cdot+value_{green}%2B0.0722\cdot+value_{blue})
+
 * If the luminosity is less than 0, black is returned.
 * If the luminosity is more than 1, white is returned.
 * Otherwise, a saturation value is initialized as 1, and then adjusted by inspecting each color channel value separately:
 
 ![adjust](https://render.githubusercontent.com/render/math?math=saturation\leftarrow\begin{cases}\min%28saturation,\frac{luma-1}{luma-value_{channel}}%29,+%26+\text{if+}value_{channel}\gt+1%5C%5C%0D%0A\min%28saturation,\frac{luma}{luma-value_{channel}}%29,+%26+\text{if+}value_{channel}\lt+0%5C%5Csaturation%26\text{otherwise}\end{cases})
 
-If the saturation is still 1, the input color is returned verbatim.
+After analyzing all color channels,
+if the saturation still remains as 1, the input color is returned verbatim.
 Otherwise each color channel is readjusted as:
 
-![adjust](https://render.githubusercontent.com/render/math?math=value_{channel}\leftarrow\min%281,\max%280,%28value_{channel}-luma%29saturation%2Bluma%29%29)
+![adjust](https://render.githubusercontent.com/render/math?math=value_{channel}\prime=\min%281,\max%280,%28value_{channel}-luma%29\cdot+saturation%2Bluma%29%29)
 
-The color channel values are then joined together to form the returned color.
+The readjusted color channel values are then joined together to form the returned color.
