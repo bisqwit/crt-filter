@@ -67,7 +67,7 @@ mask. See Filtering, below, for an example of what it looks like.
 
 The filter is designed for DOS videos, and specifically for sessions
 involving the text mode. Because chances are that successive frames are
-identical or almost identical, the filter calculates a hash of every source frame.
+often identical, the filter calculates a hash of every source frame.
 
 If the hash is found to be identical to some previous frame,
 the filtered result of the previous frame is sent.
@@ -84,7 +84,7 @@ First, the image is un-gammacorrected.
 ### Rescaling to scanline count
 
 Then, the image is rescaled to the height of number of given scanlines using a Lanczos filter.
-The Lanczos filter has filter width set as 2.
+Kernel size 2 was was selected for the Lanczos filter.
 
 If your source height is greater than the number of scanlines you specified, you will lose detail.
 
@@ -96,7 +96,7 @@ The scaling is performed first vertically and then horizontally.
 Before horizontal scaling, the brightness of each row of pixels
 is adjusted by a constant factor that is calculated by
 
-![formula](https://render.githubusercontent.com/render/math?math=e^{-\frac{%28n-0.5%29^2}{2+c^2}}\text{ where }c=0.3\text{ and }n\text{ is+the+fractional+part+of+the+source+Y+coordinate.})
+![formula](https://render.githubusercontent.com/render/math?math=e^{-0.5%28n-0.5%29^{2}c^{-2}}\text{ where }c=0.3\text{ and }n\text{ is+the+fractional+part+of+the+source+Y+coordinate.})
 
 This formula gives a gaussian distribution that looks like a hill,
 that peaks in the middle and fades smoothly to the sides. 
@@ -104,7 +104,7 @@ This hill represents the brightness curve of each scanline.
 Plotted in a graphing calculator, it looks like this.
 The c constant controls how steep that hill is. A small value like 0.1
 produces a very narrow hill with very sharp and narrow scanlines,
-and bigger values produce flatter hills i.e. less pronounced scanlines.
+and bigger values produce flatter hills and less pronounced scanlines.
 0.3 looked like a good compromise.
 
 ![Gaussian](img/weights.png)
@@ -127,6 +127,13 @@ The mask is generated procedurally from the cell parameters.
 
 Then the image is rescaled to the target picture width and target picture height using a Lanczos filter.
 The scaling is performed first vertically and the horizontally.
+
+A Lanczos filter was chosen because it is generally deemed the
+best compromise between blurring and fringing
+among several simple filters
+([Wikipedia](https://en.wikipedia.org/wiki/Lanczos_resampling)).
+I have been using it for years for interpolating all sorts of signals
+from pictures to sounds.
 
 ### Bloom
 
@@ -157,9 +164,10 @@ Because of the combination of amplification and blurring,
 if there are isolated bright pixels in the scene,
 their power is spread out on big area
 and thus do not contribute much to the final picture,
-but if there is a large group of bright pixels closeby,
+but if there is a large cluster of bright pixels closeby,
 they remain bright even after blurring,
 and will influence the final picture a lot.
+This produces a bloom effect.
 
 ### Clamping
 
@@ -186,3 +194,50 @@ Otherwise each color channel is readjusted as:
 ![adjust](https://render.githubusercontent.com/render/math?math=value_{channel}\prime=\min%281,\max%280,%28value_{channel}-luma%29\cdot+saturation%2Bluma%29%29)
 
 The readjusted color channel values are then joined together to form the returned color.
+
+The advantage of desaturation-aware clamping over naïve clamping
+is that it does a much better job at preserving energy.
+To illustrate, here is a picture with two color ramps.
+The brightness of the color ramp increases linearly along the Y axis.
+That is, top is darkest (0) and bottom is brightest (1, i.e. full).
+Every pixel on each scanline should be approximately same brightness.
+
+![Rainbow illustration](img/rainbow.png)
+
+In the leftside picture with naïve clamping, you can see that the further
+down you go in the picture, the more different the color brightnesses are.
+The blue stripe is much, much darker than anything else in the picture,
+even though it is fully saturated and as bright as your screen can make it.*
+
+However, on the right side, with the desaturation aware clamping formula,
+every scanline remains at perfectly even brightness, even
+when you exceed the maximum possible brightness of the screen colors.
+
+(Note: “Perfectly” was a hyperbole.
+The colors are not quite the same brightness especially near the top
+of the picture, because of differences in screen calibration and because of
+differences in human individual eyes. This is more of an illustration.)
+You can download the source code of this illustration in
+[img/rainbow.php](img/rainbow.php).
+
+Note that this does *not* mean that all colors become more washed out.
+You may come to this mistaken conclusion, because this illustration is
+fixed for perceptual brightness. Colors that are within the RGB color
+range will be kept perfectly intact. The only colors that will be
+desaturated are those that are have out-of-range values
+(i.e. individual channel values are greater than 255 or smaller than 0).
+
+*) Note that \#0000FF is not blue at brightness 1. While it is maximally bright
+fully saturated blue, its brightness is only about 10 % of the brightness of
+\#00FF00, maximally bright fully saturated green, and only about 7 % of the
+brightness of \#FFFFFF, a maximally bright white pixel (which does have
+brightness level of 1).
+
+This is trivial to
+prove: \#FFFFFF is a color where you light up all the LEDs that comprise
+color \#0000FF, but you also light up all the LEDs that comprise \#FF0000
+and all the LEDs that comprise \#00FF00. Because there are three times as
+many LEDs shining as when just \#0000FF is shown, the brightness of \#FFFFFF
+cannot be the same, but has to be much higher. Therefore, \#0000FF cannot
+have brightness level of 1.
+
