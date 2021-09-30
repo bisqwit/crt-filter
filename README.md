@@ -42,32 +42,14 @@ but that is not a requirement.
 
 ## How it works
 
-### Hardcoded parameters
+### Hardcoded constants
 
-* The number of simulated horizontal pixels is hard-coded at 640.
-* The number of simulated vertical pixels is hard-coded at 400.
+These constants specify the pixel grid (shadow mask) used by the simulated CRT monitor.
 
-The simulated cell geometry is hardcoded as:
+Currently they are hardcoded in the program,
+but they are easy to find if you want to tweak the source code.
 
-* Red cell   is 2 pixels of red and 1 pixel of black
-* Green cell is 2 pixels of green and 1 pixel of black
-* Blue cell  is 2 pixels of blue and 2 pixels of black
-* Each cell  is 5 pixels tall followed by 1 pixel of black
-* Successive columns are staggered 3 pixels apart vertically
-
-The intermediate geometry,
-as it appears below in the algorithm description,
-is calculated as follows:
-
-The intermediate width is the number of pixel cells on the screen
-multiplied by the sum of cell widths.
-
-![width](https://render.githubusercontent.com/render/math?math=640\times%282%2B1+%2B+2%2B1+%2B+2%2B2%29=6400)
-
-The intermediate height is the number of vertical pixels on screen
-multiplied by the cell height.
-
-![height](https://render.githubusercontent.com/render/math?math=400\times%285%2B1%29=2400)
+![width](https://render.githubusercontent.com/render/math?math=\begin{align*}npix_{width}%26=640+%5C%5C+npix_{height}%26=400+%5C%5C+cellwidth_{red}%26=cellwidth_{green}=cellwidth_{blue}=2+%5C%5C+cellblank_{red}%26=cellblank_{green}=1+%5C%5C+cellblank_{blue}%26=2+%5C%5C+cellheight_{vert}%26=5+%5C%5C+cellblank_{vert}%26=1+%5C%5C+cellstagger%26=3+%5C%5C+intermediatewidth%26=npix_{width}\cdot%28cellwidth_{red}%2Bcellblank_{red}%2Bcellheight_{green}%2Bcellblank_{green}%2Bcellwidth_{blue}%2Bcellblank_{blue}%29=6400+%5C%5C+intermediateheight%26=npix_{height}\cdot%28cellheight_{vert}%2Bcellblank_{vert}%29=2400\end{align*})
 
 ### Hashing
 
