@@ -32,21 +32,6 @@ Scanlines is the number of scanlines you wish to simulate.
 Generally that would be the same as the vertical resolution of the source video,
 but that is not a requirement.
 
-## Hardcoded parameters
-
-* The number of horizontal pixels simulated is hard-coded at 640.
-* The number of vertical pixels simulated is hard-coded at 400.
-
-### Cell parameters 
-
-The simulated cell geometry is hardcoded as:
-
-* Red cell is 2 pixels of red and 1 pixel of black
-* Green cell is 2 pixels of green and 1 pixel of black
-* Blue cell is 2 pixels of blue and 2 pixels of black
-* Each cell is 5 pixels tall followed by 1 pixel of black
-* Successive columns are staggered 3 pixels apart vertically
-
 ## Screenshots
 
 ![Original1](img/mpv-shot0001.jpg)
@@ -56,6 +41,33 @@ The simulated cell geometry is hardcoded as:
 ![Filtered2](img/mpv-shot0004.jpg)
 
 ## How it works
+
+### Hardcoded parameters
+
+* The number of simulated horizontal pixels is hard-coded at 640.
+* The number of simulated vertical pixels is hard-coded at 400.
+
+The simulated cell geometry is hardcoded as:
+
+* Red cell   is 2 pixels of red and 1 pixel of black
+* Green cell is 2 pixels of green and 1 pixel of black
+* Blue cell  is 2 pixels of blue and 2 pixels of black
+* Each cell  is 5 pixels tall followed by 1 pixel of black
+* Successive columns are staggered 3 pixels apart vertically
+
+The intermediate geometry,
+as it appears below in the algorithm description,
+is calculated as follows:
+
+The intermediate width is the number of pixel cells on the screen
+multiplied by the sum of cell widths.
+
+![width](https://render.githubusercontent.com/render/math?math=640\times%282%2B1+%2B+2%2B1+%2B+2%2B2%29=6400)
+
+The intermediate height is the number of vertical pixels on screen
+multiplied by the cell height.
+
+![height](https://render.githubusercontent.com/render/math?math=400\times%285%2B1%29=2400)
 
 ### Hashing
 
@@ -94,19 +106,10 @@ that is calculated by
 
 where c=0.3, and n is the decimal part of the source Y coordinate.
 
-The intermediate height is the number of vertical pixels on screen
-multiplied by the cell height. This number is hardcoded as:
-
-![height](https://render.githubusercontent.com/render/math?math=400\times%285%2B1%29=2400)
-
 ### Rescaling, part 3
 
 Then, the image is rescaled to an intermediate width using a nearest-neighbor filter.
 
-The intermediate width is the number of pixel cells on the screen
-multiplied by the sum of cell widths. This number is hardcoded as:
-
-![width](https://render.githubusercontent.com/render/math?math=640\times%282%2B1+%2B+2%2B1+%2B+2%2B2%29=6400)
 
 ### Filtering
 
