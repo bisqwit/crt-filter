@@ -10,7 +10,7 @@ Here it is finally.
 
 Run this command to build the filter:
 
-    g++ -o crt-filter crt-filter.cc -fopenmp -Ofast -march=native -Wall -Wextra
+    g++ -o crt-filter crt-filter.cc -fopenmp -Ofast -march=native -Wall -Wextra -std=c++17
 
 ## Usage
 

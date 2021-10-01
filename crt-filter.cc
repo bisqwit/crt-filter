@@ -340,34 +340,54 @@ static std::uint32_t ClampWithDesaturation(int r,int g,int b)
     else if(luma <= 0) { r=g=b=0; }
     else
     {
+        // See explanations below on the uses of this function.
         auto spread = [&r,&g,&b,R,G,B](auto&& test, auto&& cap, int sign)
         {
-            int cr,cg,cb, work,capacity;
-            if((work = R*std::max(0, test(r))
-                     + G*std::max(0, test(g))
-                     + B*std::max(0, test(b)))
-            && (capacity = R*std::max(0, (cr = cap(r)))
-                         + G*std::max(0, (cg = cap(g)))
-                         + B*std::max(0, (cb = cap(b)))))
+            // Is there load waiting to be shared?
+            int cr,cg,cb, work = R*std::max(0, test(r))
+                               + G*std::max(0, test(g))
+                               + B*std::max(0, test(b));
+            if(!work) return false;
+            // Are there capable load bearers?
+            if(int capacity = R*std::max(0, (cr = cap(r)))
+                            + G*std::max(0, (cg = cap(g)))
+                            + B*std::max(0, (cb = cap(b))))
             {
+                // Distribute the load (take it away & give to others).
                 int act = std::min(work, capacity);
                 r += cr * sign * act / (cr > 0 ? capacity : work);
                 g += cg * sign * act / (cg > 0 ? capacity : work);
                 b += cb * sign * act / (cb > 0 ? capacity : work);
             }
+            return true;
         };
         // Find out the amount of excess color energy.
         // Dissipate it to capable channels,
         // and take it away from those that had excess.
-        spread([](int c) { return c-255; }, // Amount of access
-               [](int c) { return 255-c; }, // Capacity for reception
-               1);
-        // Find out the amount of color energy debt.
-        // Borrow energy from capable channels,
-        // and give it to channels that need it.
-        spread([](int c) { return -c; }, // Amount of debt
-               [](int c) { return c; },  // Capacity for borrowing
-               -1);
+        for(int rounds=0; rounds<4; ++rounds)
+        {
+            bool excess = spread([](int c) { return c-255; }, // Amount of access
+                                 [](int c) { return 255-c; }, // Capacity for reception
+                                 1);
+            // Find out the amount of color energy debt.
+            // Borrow energy from capable channels,
+            // and give it to channels that need it.
+            bool debt  = spread([](int c) { return -c; }, // Amount of debt
+                                [](int c) { return c; },  // Capacity for borrowing
+                                -1);
+            if(!excess && !debt) break;
+        }
+        // Normally, 1 round should be fine. In case it isn't, we provide
+        // a few retry rounds. 2 round is at most needed, in my experiments.
+        // But just to be perfectly safe, in the unlikely case that one of
+        // the channels still needs clamping... We do it the traditional way.
+        // They need clamping if one of the values has bits other than 0-7 set.
+        if(unlikely((r | g | b) & ~0xFF))
+        {
+            r = std::clamp(r, 0, 255);
+            g = std::clamp(g, 0, 255);
+            b = std::clamp(b, 0, 255);
+        }
     }
     return unsigned(r)*65536u + unsigned(g)*256u + b;
 }
