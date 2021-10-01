@@ -332,24 +332,42 @@ static void HLanczos(unsigned in_width,unsigned in_height, unsigned out_width, c
     LanczosScale(in_width, out_width, handler_x);
 }
 
-static int clamp(int value, int mi, int ma) { return std::max(std::min(value,ma), mi); }
 static std::uint32_t ClampWithDesaturation(int r,int g,int b)
 {
-    int luma = r*2126 + g*7152 + b*722;
-    if(luma > 2550000) { r=g=b=255; }
+    const int R = 2126, G = 7152, B = 722, sum=R+G+B;
+    int luma = r*R + g*G + b*B;
+    if(luma > 255*sum) { r=g=b=255; }
     else if(luma <= 0) { r=g=b=0; }
     else
     {
-        double sat = 1., lum = luma / 1e4;
-        if(r > 255) sat = std::min(sat, (lum-255) / (lum-r)); else if(r < 0) sat = std::min(sat, lum / (double)(lum-r));
-        if(g > 255) sat = std::min(sat, (lum-255) / (lum-g)); else if(g < 0) sat = std::min(sat, lum / (double)(lum-g));
-        if(b > 255) sat = std::min(sat, (lum-255) / (lum-b)); else if(b < 0) sat = std::min(sat, lum / (double)(lum-b));
-        if(sat != 1.)
+        auto spread = [&r,&g,&b,R,G,B](auto&& test, auto&& cap, int sign)
         {
-            r = (r - lum) * sat + lum; r = clamp(r,0,255);
-            g = (g - lum) * sat + lum; g = clamp(g,0,255);
-            b = (b - lum) * sat + lum; b = clamp(b,0,255);
-        }
+            int cr,cg,cb, work,capacity;
+            if((work = R*std::max(0, test(r))
+                     + G*std::max(0, test(g))
+                     + B*std::max(0, test(b)))
+            && (capacity = R*std::max(0, (cr = cap(r)))
+                         + G*std::max(0, (cg = cap(g)))
+                         + B*std::max(0, (cb = cap(b)))))
+            {
+                int act = std::min(work, capacity);
+                r += cr * sign * act / (cr > 0 ? capacity : work);
+                g += cg * sign * act / (cg > 0 ? capacity : work);
+                b += cb * sign * act / (cb > 0 ? capacity : work);
+            }
+        };
+        // Find out the amount of excess color energy.
+        // Dissipate it to capable channels,
+        // and take it away from those that had excess.
+        spread([](int c) { return c-255; }, // Amount of access
+               [](int c) { return 255-c; }, // Capacity for reception
+               1);
+        // Find out the amount of color energy debt.
+        // Borrow energy from capable channels,
+        // and give it to channels that need it.
+        spread([](int c) { return -c; }, // Amount of debt
+               [](int c) { return c; },  // Capacity for borrowing
+               -1);
     }
     return unsigned(r)*65536u + unsigned(g)*256u + b;
 }

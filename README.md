@@ -223,8 +223,9 @@ The brightness of the color ramp increases linearly along the Y axis.
 That is, top is darkest (0) and bottom is brightest (1, i.e. full).
 Every pixel on each scanline should be approximately same brightness.
 
-The brightness scaling is done by simply multiplying the RGB color with the brightness value,
-even if it produces out-of-range colors.
+The brightness scaling in this illustration is done by simply multiplying
+the RGB color with the brightness value. At high brightness values, this
+produces colors that are impossible to show on the screen.
 
 ![Rainbow illustration](img/rainbow.png)
 
@@ -238,6 +239,11 @@ However, on the right side, with the desaturation aware clamping formula,
 every scanline remains at perfectly even brightness, even
 when you exceed the maximum possible brightness of the screen colors.
 
+In the desaturation-aware algorithm, colors that are impossible 
+to show on screen due to excess brightness are approximated with 
+desaturated versions, that preserve the brightness perception 
+at the cost of color saturation.
+
 (Note: “Perfectly” was a hyperbole.
 The colors are not quite the same brightness,
 because of differences in screen calibration and because of
@@ -247,10 +253,13 @@ You can download the source code of this illustration in
 
 Note that this does *not* mean that all colors become more washed out.
 You may come to this mistaken conclusion, because this illustration is
-fixed for perceptual brightness. Colors that are within the RGB color
-range will be kept perfectly intact. The only colors that will be
+fixed for perceptual brightness. The only colors that will be
 desaturated are those that are have out-of-range values
-(i.e. individual channel values are greater than 255 or smaller than 0).
+(i.e. individual channel values are greater than 255 or smaller than 0);
+marked with crosshatch pattern in the below picture.
+Everything else is kept unchanged.
+
+![Rainbow with crosshatch](img/rainbow2.png)
 
 *) Note that \#0000FF is not blue at brightness 1. While it is maximally bright
 fully saturated blue, its brightness is only about 10 % of the brightness of
@@ -266,3 +275,9 @@ many LEDs shining as when just \#0000FF is shown, the brightness of \#FFFFFF
 cannot be the same, but has to be much higher. Therefore, \#0000FF cannot
 have brightness level of 1.
 
+It is also worth noting that brightness is not the same as radiant energy.
+This has nothing to do with energy.
+The human eye is simply differently sensitive to different wavelengths
+of visible light; least of them to blue (see
+[V(λ)](https://en.wikipedia.org/wiki/Luminous_efficiency_function)).
+Brightness is a perception phenomenon.
