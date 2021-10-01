@@ -43,6 +43,8 @@ See `make-reencoded.sh` and `reencode.sh` for a practical example.
 
 ## Screenshots
 
+(Click to enlarge the filtered pictures)
+
 ![Original1](img/mpv-shot0001.jpg)
 ![Filtered1](img/mpv-shot0002.jpg)
 
@@ -62,6 +64,13 @@ but they are easy to find if you want to tweak the source code.
 
 The cell widths and heights and staggering specify the geometry of the shadow
 mask. See Filtering, below, for an example of what it looks like.
+
+**NB: This page uses GitHub’s own LaTeX math renderer to show equations.
+Unfortunately, this renderer produces transparent pictures with black text,
+and has very poor usability on *dark mode.*
+I am aware of this problem, but there is very little I can do about it,
+until GitHub itself fixes it!
+Sorry. Please view this site on desktop with non-dark mode.**
 
 ### Hashing
 
@@ -201,6 +210,9 @@ To illustrate, here is a picture with two color ramps.
 The brightness of the color ramp increases linearly along the Y axis.
 That is, top is darkest (0) and bottom is brightest (1, i.e. full).
 Every pixel on each scanline should be approximately same brightness.
+
+The brightness scaling is done by simply multiplying the RGB color with the brightness value,
+even if it produces out-of-range colors.
 
 ![Rainbow illustration](img/rainbow.png)
 
