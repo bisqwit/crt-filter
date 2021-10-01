@@ -31,7 +31,7 @@ Generally that would be the same as the vertical resolution of the source video,
 but that is not a requirement.
 
 For best quality, the number of scanlines should be chosen
-such that the intermediate height (see Hardcoded constants)
+such that the intermediate height (see Constants)
 is its integer multiple.
 The intermediate width should ideally also be an integer
 multiple of the source width. None of this is required though.
@@ -53,7 +53,7 @@ See `make-reencoded.sh` and `reencode.sh` for a practical example.
 
 ## How it works
 
-### Hardcoded constants
+### Constants
 
 These constants specify the pixel grid (shadow mask) used by the simulated CRT monitor.
 
@@ -107,16 +107,23 @@ is adjusted by a constant factor that is calculated by
 
 ![formula](https://render.githubusercontent.com/render/math?math=e^{-0.5%28n-0.5%29^{2}c^{-2}}\text{ where }c=0.3\text{ and }n\text{ is+the+fractional+part+of+the+source+Y+coordinate.})
 
-This formula gives a gaussian distribution that looks like a hill,
-that peaks in the middle and fades smoothly to the sides. 
-This hill represents the brightness curve of each scanline.
+This formula produces a figure that sort of looks like a hill.
+It peaks in the middle and fades smoothly to the sides. 
+This hill represents the brightness of each scanline, as a function of distance from its beginning.
 Plotted in a graphing calculator, it looks like this.
 The c constant controls how steep that hill is. A small value like 0.1
 produces a very narrow hill with very sharp and narrow scanlines,
 and bigger values produce flatter hills and less pronounced scanlines.
 0.3 looked like a good compromise.
 
+This simulates the electron gun passing through in horizontal lines called scanlines,
+as it renders the picture line by line.
+
 ![Gaussian](img/weights.png)
+![Copper bars](img/coppers.png)
+
+You can download the source code of the right-hand-side illustration in
+[img/coppers.php](img/coppers.php).
 
 ### Filtering
 
@@ -128,9 +135,15 @@ The mask is a repeating pattern that essentially looks like this:
 
 ![Mask](img/mask.png)
 
-Where red pixels are 1 for red channel, green pixels are 1 for green channel, and blue pixels are 1 for blue channel, and everything else for everyone is 0.
+Red pixels denote 1 for red channel,
+green pixels denote 1 for green channel,
+blue pixels denote 1 for blue channel,
+and everything else for everyone is 0.
 
-The mask is generated procedurally from the cell parameters.
+This simulates the shadow mask in front of the cathode ray tube.
+
+The mask is generated procedurally from the cell parameters
+(see Constants).
 
 ### Rescaling to target size
 
@@ -163,9 +176,8 @@ Then, the actual picture is gamma-corrected, this time without a brightening fac
 
 ![gamma](https://render.githubusercontent.com/render/math?math=value\leftarrow+value^\gamma\text{ for every color channel }value\text{ in the picture})
 
-Then, blurry copy is added into with the picture,
-by literally adding its pixel values into the target pixel values
-and writing the result to the target.
+Then, the blurry copy is merged into the picture,
+by literally adding its pixel values into the target pixel values.
 
 ![gamma](https://render.githubusercontent.com/render/math?math=value\leftarrow+value%2Bvalue_{copy}\text{ for every color channel }value\text{ in the picture})
 
@@ -216,7 +228,8 @@ even if it produces out-of-range colors.
 
 ![Rainbow illustration](img/rainbow.png)
 
-In the leftside picture with naïve clamping, you can see that the further
+In the leftside picture with naïve clamping (i.e. `if x>255, then set x to 255`),
+you can see that the further
 down you go in the picture, the more different the color brightnesses are.
 The blue stripe is much, much darker than anything else in the picture,
 even though it is fully saturated and as bright as your screen can make it.*
@@ -226,8 +239,8 @@ every scanline remains at perfectly even brightness, even
 when you exceed the maximum possible brightness of the screen colors.
 
 (Note: “Perfectly” was a hyperbole.
-The colors are not quite the same brightness especially near the top
-of the picture, because of differences in screen calibration and because of
+The colors are not quite the same brightness,
+because of differences in screen calibration and because of
 differences in human individual eyes. This is more of an illustration.)
 You can download the source code of this illustration in
 [img/rainbow.php](img/rainbow.php).
